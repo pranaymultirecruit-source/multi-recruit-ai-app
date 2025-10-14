@@ -5,7 +5,7 @@ from PIL import Image  # for handling images
 logo = Image.open("logo.png")
 
 # Display the logo in your app
-st.image(logo, width=300) 
+st.image(logo, width=200) 
 
 import streamlit as st
 import openai
