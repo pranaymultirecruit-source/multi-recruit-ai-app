@@ -1,0 +1,12 @@
+.env
+.gitignore
+.gitignore.txt
+app.py
+file_list.txt
+logo.png
+multi-recruit.bat
+multi_recruit_ai_full_qa.csv
+requirements.txt
+sk-proj-4R7FfW8DCWDOcarDW3-f2bduTeg.txt
+UTF-8.txt
+venv
