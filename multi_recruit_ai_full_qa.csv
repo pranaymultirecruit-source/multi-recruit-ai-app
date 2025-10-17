@@ -1,0 +1,46 @@
+﻿question,answer
+What is Multi Recruit?,"Multi Recruit is a Bengaluru-based recruitment agency founded in 2012 by Praveen Kumar DK and Shashank Vagale. The company specializes in providing customized, tech-enabled recruitment solutions for startups, small and medium-sized businesses (SMBs), and larger enterprises. Their services encompass end-to-end recruitment, including market intelligence, candidate sourcing, background verification, and HR consulting .
+Operating from their office in Vinayaka Extension, Kempegowda Nagar, Bengaluru, Multi Recruit has been in business for over a decade. They cater to various industries such as IT, BFSI, real estate, outsourcing, retail, healthcare, e-commerce, and media 
+Multi Recruit
+For more information or to explore job opportunities, you can visit our official website:  https://www.multirecruit.com"
+What industries do you cater to?,"We cater to IT, BFSI, Real Estate, Outsourcing, Healthcare, e-commerce, and media industries."
+How do I apply for a job?,You can apply for jobs through our website or by sending your resume to our recruitment email.
+What is your payroll service?,We provide a transparent and effective end-to-end payroll solution for companies.
+What is HR consulting?,"Multi Recruit offers HR consulting with more than 7 years of experience, creating and managing HR processes and policies."
+Do you provide video interviews?,"Yes, we offer a digital platform for video interviews, assessments, and talent planning."
+How do I reset my Microsoft password?,Go to https://account.live.com/password/reset and follow the instructions.
+"My laptop is running slow, what should I do?","Close unnecessary programs, check for Windows updates, run antivirus scan, and restart your laptop."
+"My Outlook emails are not syncing, how to fix?","Check internet connection, go to File > Account Settings > Repair Account, restart Outlook. If still fails, remove and re-add your account."
+What is a virtual server?,"A virtual server is a software-based server running on a physical server, used for hosting multiple virtual machines independently."
+What services does Multi Recruit provide?,"Multi Recruit offers Recruitment Solutions, HR Consulting, Payroll Services, and Video Interviewing Platforms to streamline hiring and HR operations."
+What industries does Multi Recruit serve?,"We cater to IT, BFSI, Real Estate, Outsourcing & Offshoring, Healthcare, E-Commerce, and Media industries."
+When was Multi Recruit founded?,Multi Recruit was established in 2013 and has been providing customized recruitment and HR solutions ever since.
+What is the Recruitment Solution offered by Multi Recruit?,"With a focused and research-driven methodology, and access to Indian and global talent pools, we add value to your hiring process and help recruit top talent from India."
+What does Multi Recruitâ€™s Payroll Service include?,"We provide a clear, transparent, and effective end-to-end payroll management solution to simplify and automate your payroll needs."
+Outlook is not opening,"Restart your system. If the issue persists, open Control Panel â†’ Mail â†’ Profiles and create a new Outlook profile."
+Outlook shows 'Disconnected' status,"Check your internet connection, restart Outlook, and ensure your Exchange or Office 365 account is active."
+Outlook is not sending or receiving emails,"Ensure account credentials are correct, clear the Outbox, and make sure 'Work Offline' mode is disabled."
+I forgot my Outlook password,Go to the Microsoft account recovery page and reset your password using your registered email or phone.
+Outlook keeps asking for a password,"Disable 'Always prompt for login credentials' under Account Settings â†’ Security, then restart Outlook."
+Outlook search is not working,Rebuild the search index: Control Panel â†’ Indexing Options â†’ Advanced â†’ Rebuild. Restart Outlook after itâ€™s done.
+Microsoft Teams is not opening,"Close Teams from Task Manager, then delete the folder %appdata%\Microsoft\Teams\Cache, and relaunch Teams."
+Teams shows 'Weâ€™re having trouble connecting.',"Check your internet, sign out and sign in again, or clear Teams cache from %appdata%\Microsoft\Teams."
+I cannot join a Teams meeting,Make sure youâ€™re signed into the correct account and that your firewall allows Teams through. Try using the web version if needed.
+Teams audio or video is not working,Check your microphone and camera permissions in Teams settings and Windows Privacy settings.
+Teams notifications are not showing,Open Teams Settings â†’ Notifications â†’ Enable all alerts. Also check Focus Assist is turned off in Windows.
+Microsoft account is locked,Go to https://account.live.com and follow the unlock instructions using your registered recovery email or phone.
+I canâ€™t sign into my Microsoft account on my laptop,Ensure youâ€™re using the correct password and internet connection. Try resetting your password if it says 'account locked.'
+How to update Windows manually,Go to Settings â†’ Windows Update â†’ Check for updates â†’ Download and install all pending updates.
+Windows update failed with an error code,Restart your system and run 'Windows Update Troubleshooter' from Settings â†’ System â†’ Troubleshoot.
+My system is slow after update,Check for background updates or processes. Run Disk Cleanup and restart your system.
+Microsoft Store is not opening,Reset the Microsoft Store app: Settings â†’ Apps â†’ Microsoft Store â†’ Advanced options â†’ Reset.
+Outlook showing 'Cannot start Microsoft Outlook' error,Go to Run â†’ type outlook.exe /safe â†’ open in Safe Mode â†’ disable faulty add-ins.
+Teams meeting recording is not available,Only meeting organizers or recorders can access recordings. Check OneDrive or SharePoint for saved files.
+How to clear cache in Microsoft Edge or Chrome,Go to Settings â†’ Privacy â†’ Clear browsing data â†’ Select 'Cached images and files.'
+How to reinstall Microsoft Teams,Uninstall from Control Panel â†’ restart your PC â†’ download latest version from Microsoft Teams official website.
+Windows is not activating,Check that your product key is valid and matches your Windows edition. Run slmgr /xpr in Command Prompt to verify activation.
+How to check Windows version and build,"Press Win + R, type winver, and press Enter to view the version and build number."
+I am getting a Blue Screen after update,"Boot into Safe Mode, uninstall the latest update, and update your drivers."
+Hi,Hi
+Who is the founder of Multi Recruit,We have three Co Founders i.e. 1.Praveen  2.Shashank 3.Shree praveen
+hi this is pranay,Hello! What's your name?
