@@ -40,7 +40,7 @@ st.markdown(hide_msg_style, unsafe_allow_html=True)
 # ------------------------------
 # Sidebar
 # ------------------------------
-menu = st.sidebar.radio(
+st.sidebar.radio(
     "Select Category:",
     ["🖥️ IT Helpdesk", "👨‍💼 Employee FAQ", "💼 Client FAQ", "🧑‍🎓 Job Seeker FAQ", "📚 Library"]
 )
@@ -62,7 +62,6 @@ if os.path.exists(csv_path):
 else:
     st.warning("CSV not found. Place 'multi_recruit_ai_full_qa.csv' in the app folder.")
 
-# Convert to JSON safely
 qa_json = json.dumps(qa_records).replace("</", "<\\/")
 
 # ------------------------------
@@ -94,39 +93,17 @@ html_template = """
 #bot-button:hover { transform: scale(1.1); }
 #chat-box {
   position: fixed;
-  bottom: 80px;
-  right: 10px;
-  width: 90%;
-  max-width: 420px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  top: 120px;
+  right: 40px;
+  width: 450px;
+  height: 320px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.3);
   padding: 12px;
   display: none;
-  z-index: 99999;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-#chat-log {
-  max-height: 60vh; /* makes it adjust to mobile screen height */
-  overflow-y: auto;
-  padding-right: 8px;
-  font-size: 15px;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Responsive behavior for phones */
-@media (max-width: 768px) {
-  #chat-box {
-    bottom: 20px;
-    right: 5%;
-    width: 90%;
-    max-width: none;
-    height: 70vh;
-    padding: 10px;
-  }
+  flex-direction: column;
+  z-index: 100000;
 }
 #chat-box h4 {
   margin: 0 0 8px 0;
@@ -135,94 +112,129 @@ html_template = """
   font-size: 18px;
   font-weight: 600;
 }
-#chat-log { flex:1; overflow-y:auto; margin-bottom:8px; font-size:14px; }
+#chat-log { 
+  flex:1; 
+  overflow-y:auto; 
+  margin-bottom:8px; 
+  font-size:14px;
+  scroll-behavior: smooth;
+}
 .chat-message { background:#e3f2fd; padding:8px; margin:6px 0; border-radius:10px; }
 .chat-message.bot { background:#e8f5e9; }
 #controls { display:flex; gap:4px; }
-#chat-input { flex:1; padding:10px; border-radius:6px; border:1px solid #ccc; font-size:16px; }
-#chat-send, #mic-button { padding:10px; border-radius:6px; background:#0288d1; color:#fff; border:none; cursor:pointer; font-size:16px; }
-.suggestion { font-size:12px; color:#555; margin-top:4px; }
+#chat-input { 
+  flex:1; 
+  padding:10px; 
+  border-radius:6px; 
+  border:1px solid #ccc; 
+  font-size:16px; 
+}
+#chat-send, #voice-toggle { 
+  padding:10px; 
+  border-radius:6px; 
+  background:#0288d1; 
+  color:#fff; 
+  border:none; 
+  cursor:pointer; 
+  font-size:16px; 
+}
+@media (max-width: 600px) {
+  #chat-box {
+    width: 90%;
+    height: 70%;
+    right: 5%;
+    top: 100px;
+  }
+  #bot-button {
+    right: 20px;
+    top: 20px;
+    width: 70px;
+    height: 70px;
+    font-size: 36px;
+  }
+}
 </style>
 </head>
 <body>
 <div id="bot-button">🤖</div>
 <div id="chat-box">
   <h4>Multi Recruit Bot</h4>
-  <div id="chat-log"><div class="chat-message bot"><b>Bot:</b> Hi, how can I help you?</div></div>
+  <div id="chat-log">
+    <div class="chat-message bot"><b>Bot:</b> Hi, how can I help you?</div>
+  </div>
   <div id="controls">
     <input id="chat-input" type="text" placeholder="Type your question..." />
     <button id="chat-send">Send</button>
     <button id="voice-toggle">Voice Off 🔇</button>
+  </div>
 </div>
-</div>
+
 <script>
 const QA = <<QA_JSON>>;
+console.log("Loaded QA:", QA);
 
-function similarity(a, b) {
-    if(!a || !b) return 0;
-    a = a.toLowerCase().split(/\s+/);
-    b = b.toLowerCase().split(/\s+/);
-    const setA = new Set(a);
-    const setB = new Set(b);
-    const intersection = new Set([...setA].filter(x => setB.has(x)));
-    const union = new Set([...setA, ...setB]);
-    return intersection.size / union.size; // Jaccard similarity
+function findAnswer(query) {
+  if (!QA || QA.length === 0) return null;
+  query = query.trim().toLowerCase();
+  // Exact match first
+  for (let i = 0; i < QA.length; i++) {
+    if (QA[i].question.trim().toLowerCase() === query) {
+      return QA[i].answer;
+    }
+  }
+  // Then partial match
+  for (let i = 0; i < QA.length; i++) {
+    if (QA[i].question.trim().toLowerCase().includes(query)) {
+      return QA[i].answer;
+    }
+  }
+  return null;
 }
 
-function findBest(query){
-  if(!QA || QA.length===0) return [];
-  const scores=QA.map(i=>({q:i.question,a:i.answer,s:similarity(query,i.question)}));
-  scores.sort((x,y)=>y.s-x.s);
-  return scores.slice(0,1); // only best
-}
-
-const botBtn=document.getElementById('bot-button');
-const chatBox=document.getElementById('chat-box');
-const chatLog=document.getElementById('chat-log');
-const chatInput=document.getElementById('chat-input');
-const chatSend=document.getElementById('chat-send');
-let voiceEnabled = false;  // default OFF
+const botBtn = document.getElementById('bot-button');
+const chatBox = document.getElementById('chat-box');
+const chatLog = document.getElementById('chat-log');
+const chatInput = document.getElementById('chat-input');
+const chatSend = document.getElementById('chat-send');
+let voiceEnabled = false;  
 
 const voiceToggle = document.getElementById('voice-toggle');
 voiceToggle.addEventListener('click', () => {
-    voiceEnabled = !voiceEnabled;
-    voiceToggle.textContent = voiceEnabled ? 'Voice On 🔊' : 'Voice Off 🔇';
+  voiceEnabled = !voiceEnabled;
+  voiceToggle.textContent = voiceEnabled ? 'Voice On 🔊' : 'Voice Off 🔇';
 });
 
 botBtn.addEventListener('click', () => {
-    chatBox.style.display = (chatBox.style.display === 'none' || chatBox.style.display === '') ? 'flex' : 'none';
+  chatBox.style.display = (chatBox.style.display === 'none' || chatBox.style.display === '') ? 'flex' : 'none';
 });
 
 chatSend.addEventListener('click', handleSend);
-chatInput.addEventListener('keydown', e => { if(e.key === 'Enter') handleSend(); });function speak(text){
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'en-US';
-    window.speechSynthesis.speak(utter);
+chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
+
+function speak(text) {
+  if (!voiceEnabled) return;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  window.speechSynthesis.speak(utter);
 }
 
-function handleSend(){
-    const text = chatInput.value.trim();
-    if(!text) return;
+function handleSend() {
+  const text = chatInput.value.trim();
+  if (!text) return;
 
-    chatLog.innerHTML += '<div class="chat-message"><b>You:</b> ' + text + '</div>';
-    chatInput.value = '';
+  chatLog.innerHTML += '<div class="chat-message"><b>You:</b> ' + text + '</div>';
+  chatInput.value = '';
 
-    const best = findBest(text)[0];
-    if(best){
-        chatLog.innerHTML += '<div class="chat-message bot"><b>Bot:</b> ' + best.a + '</div>';
-        speak(best.a);  // Speak the answer
-    } else {
-        const msg = "Sorry, I do not know the answer.";
-        chatLog.innerHTML += '<div class="chat-message bot"><b>Bot:</b> ' + msg + '</div>';
-        speak(msg);  // Speak the fallback
-    }
+  const answer = findAnswer(text);
+  const reply = answer ? answer : "Sorry, I don’t have an answer for this.";
 
-    chatLog.scrollTop = chatLog.scrollHeight;
+  chatLog.innerHTML += '<div class="chat-message bot"><b>Bot:</b> ' + reply + '</div>';
+  chatLog.scrollTop = chatLog.scrollHeight;
+  speak(reply);
 }
 </script>
 </body>
 </html>
 """
 
-components_html = html_template.replace("<<QA_JSON>>", qa_json)
-components.html(components_html, height=720)
+components.html(html_template.replace("<<QA_JSON>>", qa_json), height=720)
