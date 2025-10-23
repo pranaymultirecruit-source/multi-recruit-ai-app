@@ -1,0 +1,10 @@
+.env
+sk-proj-*.txt
+# Python cache and compiled files.txt
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.DS_Store
+Thumbs.db
