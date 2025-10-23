@@ -237,4 +237,4 @@ function handleSend() {
 </html>
 """
 
-components.html(html_template.replace("<<QA_JSON>>", qa_json), height=720)
+components.html(html_template.replace("<<QA_JSON>>", qa_json), height=520)
