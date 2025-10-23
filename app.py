@@ -94,17 +94,39 @@ html_template = """
 #bot-button:hover { transform: scale(1.1); }
 #chat-box {
   position: fixed;
-  top: 120px;
-  right: 40px;
-  width: 450px;
-  height: 300px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 0 12px rgba(0,0,0,0.3);
+  bottom: 80px;
+  right: 10px;
+  width: 90%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   padding: 12px;
   display: none;
-  flex-direction: column;
-  z-index: 100000;
+  z-index: 99999;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#chat-log {
+  max-height: 60vh; /* makes it adjust to mobile screen height */
+  overflow-y: auto;
+  padding-right: 8px;
+  font-size: 15px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Responsive behavior for phones */
+@media (max-width: 768px) {
+  #chat-box {
+    bottom: 20px;
+    right: 5%;
+    width: 90%;
+    max-width: none;
+    height: 70vh;
+    padding: 10px;
+  }
 }
 #chat-box h4 {
   margin: 0 0 8px 0;
