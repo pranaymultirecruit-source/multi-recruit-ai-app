@@ -123,8 +123,8 @@ html_template = """
 <style>
 #bot-button {
   position: fixed;
-  top: 25px;
-  right: 100px;
+  top: 100px;
+  right: 40px;
   width: 85px;
   height: 85px;
   border-radius: 50%;
@@ -167,6 +167,7 @@ html_template = """
   font-size:14px;
   scroll-behavior: smooth;
 }
+
 .chat-message { background:#e3f2fd; padding:8px; margin:6px 0; border-radius:10px; }
 .chat-message.bot { background:#e8f5e9; }
 #controls { display:flex; gap:4px; }
@@ -203,7 +204,37 @@ html_template = """
 }
 </style>
 </head>
+<script>
+document.querySelectorAll(".quick-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const userMessage = btn.innerText;
+    // Send button text to Streamlit
+    window.parent.postMessage(
+      { type: "streamlit:setComponentValue", value: userMessage },
+      "*"
+    );
+  });
+});
+</script>
 <body>
+<!-- Greeting Section -->
+<div id="greeting" style="margin-top: 10px; text-align: center;">
+  <p style="font-size: 15px; color: #01579b; font-weight: 500;">💬 Hi, how can I help you?</p>
+</div>
+<!-- Quick Reply Buttons -->
+<div id="quick-replies" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 10px 0;">
+  <button class="quick-btn">Received spam email</button>
+  <button class="quick-btn">Forgot Password</button>
+  <button class="quick-btn">Laptop Not Turning On</button>
+  <button class="quick-btn">Laptop Running Slow</button>
+  <button class="quick-btn">Microsoft Teams Issue</button>
+</div>
+
+<!-- Instruction Message -->
+<div id="instruction" style="text-align: center; font-size: 13px; color: gray;">
+  <p>💡 If your issue is not listed above, please type your request in the chat box below.</p>
+</div>
+
 <div id="bot-button">🤖</div>
 <div id="chat-box">
   <h4>Multi Recruit Bot</h4>
@@ -284,5 +315,11 @@ function handleSend() {
 </body>
 </html>
 """
+user_input = components.html(
+    html_template.replace("<<QA_JSON>>", qa_json),
+    height=720,
+)
 
-components.html(html_template.replace("<<QA_JSON>>", qa_json), height=720)
+if user_input:
+    response = get_bot_response(user_input)
+    st.write(response)
