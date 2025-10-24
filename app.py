@@ -7,31 +7,72 @@ from dotenv import load_dotenv
 import streamlit.components.v1 as components
 
 # ------------------------------
-# Setup
+# Setup paths
 # ------------------------------
-import streamlit as st
-from PIL import Image
-import os
-import pandas as pd
-import json
-from dotenv import load_dotenv
-import streamlit.components.v1 as components
+load_dotenv()
+base_path = os.path.dirname(os.path.abspath(__file__))
+logo_path = os.path.join(base_path, "logo.png")
+
+st.set_page_config(page_title="Multi Recruit AI", page_icon="🤖", layout="wide")
 
 # ------------------------------
-# Hide Streamlit menu, footer, GitHub, and decorations
+# Show or hide Streamlit menus depending on environment
 # ------------------------------
-hide_streamlit_style = """
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    [data-testid="stFooter"] {visibility: hidden; height: 0px;}
-    [data-testid="stDecoration"] {display: none;}
-    </style>
+
+# Safe check for Streamlit Cloud
+browser_address = st.get_option("browser.serverAddress", "")
+is_cloud = "streamlit.app" in browser_address
+
+if is_cloud:
+    # Hide menu, footer, GitHub, hosted-with-streamlit text for public users
+    hide_streamlit_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        [data-testid="stFooter"] {visibility: hidden; height: 0px;}
+        [data-testid="stDecoration"] {display: none;}
+        </style>
+    """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+else:
+    # Local mode (developer sees everything)
+    st.sidebar.success("🧑‍💻 Developer mode — Full UI visible")
+
+# ------------------------------
+# Show logo if exists
+# ------------------------------
+if os.path.exists(logo_path):
+    try:
+        img = Image.open(logo_path)
+        st.image(img, width=160)
+    except Exception:
+        pass
+
+# ------------------------------
+# Page content
+# ------------------------------
+st.title("MultiRecruit AI Assistant")
+st.write("Click the 🤖 bot (top-right) and ask your question.")
+
+
+# Show logo if exists
+if os.path.exists(logo_path):
+    try:
+        img = Image.open(logo_path)
+        st.image(img, width=160)
+    except Exception:
+        pass
+
+# Optional: hide notifications
+hide_msg_style = """
+<style>
+div[data-testid="stNotification"], .stAlert, .stInfo, .stSuccess {
+    display: none !important;
+}
+</style>
 """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-# ------------------------------
+st.markdown(hide_msg_style, unsafe_allow_html=True)# ------------------------------
 # Setup
 # ------------------------------
 load_dotenv()
@@ -263,4 +304,3 @@ function handleSend() {
 """
 
 components.html(html_template.replace("<<QA_JSON>>", qa_json), height=720)
-
