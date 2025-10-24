@@ -1,8 +1,8 @@
 import streamlit as st
 from PIL import Image
-import os
 import pandas as pd
 import json
+import os
 from dotenv import load_dotenv
 import streamlit.components.v1 as components
 
@@ -19,8 +19,12 @@ st.set_page_config(page_title="Multi Recruit AI", page_icon="🤖", layout="wide
 # Show or hide Streamlit menus depending on environment
 # ------------------------------
 
-# Safe check for Streamlit Cloud
-browser_address = st.get_option("browser.serverAddress", "")
+# Safe check for Streamlit Cloud (works on older Streamlit versions too)
+try:
+    browser_address = st.get_option("browser.serverAddress")
+except:
+    browser_address = ""
+
 is_cloud = "streamlit.app" in browser_address
 
 if is_cloud:
@@ -40,29 +44,18 @@ else:
     st.sidebar.success("🧑‍💻 Developer mode — Full UI visible")
 
 # ------------------------------
-# Show logo if exists
-# ------------------------------
-if os.path.exists(logo_path):
-    try:
-        img = Image.open(logo_path)
-        st.image(img, width=160)
-    except Exception:
-        pass
-
-# ------------------------------
-# Page content
+# Page content with single logo
 # ------------------------------
 st.title("MultiRecruit AI Assistant")
 st.write("Click the 🤖 bot (top-right) and ask your question.")
 
-
-# Show logo if exists
 if os.path.exists(logo_path):
     try:
         img = Image.open(logo_path)
         st.image(img, width=160)
     except Exception:
         pass
+
 
 # Optional: hide notifications
 hide_msg_style = """
@@ -79,17 +72,6 @@ load_dotenv()
 base_path = os.path.dirname(os.path.abspath(__file__))
 logo_path = os.path.join(base_path, "logo.png")
 
-st.set_page_config(page_title="Multi Recruit AI", page_icon="🤖", layout="wide")
-st.title("Multi Recruit AI Assistant")
-st.write("Click the 🤖 bot (top-right) and ask your question.")
-
-# Show logo if exists
-if os.path.exists(logo_path):
-    try:
-        img = Image.open(logo_path)
-        st.image(img, width=160)
-    except Exception:
-        pass
 
 # ------------------------------
 # Hide Streamlit notifications
