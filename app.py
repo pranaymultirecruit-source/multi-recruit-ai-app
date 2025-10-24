@@ -9,6 +9,31 @@ import streamlit.components.v1 as components
 # ------------------------------
 # Setup
 # ------------------------------
+import streamlit as st
+from PIL import Image
+import os
+import pandas as pd
+import json
+from dotenv import load_dotenv
+import streamlit.components.v1 as components
+
+# ------------------------------
+# Hide Streamlit menu, footer, GitHub, and decorations
+# ------------------------------
+hide_streamlit_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    [data-testid="stFooter"] {visibility: hidden; height: 0px;}
+    [data-testid="stDecoration"] {display: none;}
+    </style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# ------------------------------
+# Setup
+# ------------------------------
 load_dotenv()
 base_path = os.path.dirname(os.path.abspath(__file__))
 logo_path = os.path.join(base_path, "logo.png")
@@ -238,3 +263,4 @@ function handleSend() {
 """
 
 components.html(html_template.replace("<<QA_JSON>>", qa_json), height=720)
+
