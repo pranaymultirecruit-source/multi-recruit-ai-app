@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 import streamlit.components.v1 as components
 import base64
 
-
 # ------------------------------
 # Helpers
 # ------------------------------
@@ -24,22 +23,20 @@ def get_bot_response(user_message: str, qa_records: list):
             return rec.get("answer", "")
     return "Sorry, I don’t have an answer for this."
 
-
 # ------------------------------
 # Setup & Background
 # ------------------------------
 load_dotenv()
 base_path = os.path.dirname(os.path.abspath(__file__))
 
-# ✅ Use your background image here
 bg_path = r"C:\Users\hp\Downloads\MR logo BG for Local host.png"
 
 st.set_page_config(page_title="MultiRecruit AI", page_icon="🤖", layout="wide")
+
 # ------------------------------
-# Page background setup (using base64 for full compatibility)
+# Page background setup
 # ------------------------------
 def set_background(image_path):
-    """Encodes image as base64 and sets it as Streamlit background."""
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
             encoded = base64.b64encode(img_file.read()).decode()
@@ -64,8 +61,6 @@ def set_background(image_path):
     else:
         st.warning(f"⚠️ Background image not found: {image_path}")
 
-# ✅ Your background image path
-bg_path = r"C:\Users\hp\Downloads\MR logo BG for Local host.png"
 set_background(bg_path)
 
 # ------------------------------
@@ -78,7 +73,6 @@ st.sidebar.radio(
     "Select Category:",
     ["🖥️ IT Helpdesk", "👨‍💼 Employee FAQ", "💼 Client FAQ", "🧑‍🎓 Job Seeker FAQ", "📚 Library"]
 )
-
 
 # ------------------------------
 # Load CSV
@@ -95,18 +89,16 @@ if os.path.exists(csv_path):
     except Exception as e:
         st.error(f"Error reading CSV: {e}")
 else:
-    st.warning("CSV not found. Place 'multi_recruit_ai_full_qa.csv' in the app folder.")
     qa_records = [
-        {"question": "Forgot Password", "answer": "Go to your password reset page and follow the instructions."},
-        {"question": "Laptop Not Turning On", "answer": "Hold the power button for 10 seconds and check your charger."},
+        {"question": "Forgot Password", "answer": "Go to your password reset page."},
+        {"question": "Laptop Not Turning On", "answer": "Hold the power button for 10 seconds."},
         {"question": "Outlook Issue", "answer": "Restart Outlook and check your internet connection."},
     ]
 
 qa_json_str = json.dumps(qa_records)
 
-
 # ------------------------------
-# Bot Component (under subtitle)
+# Bot + Tech Support HTML
 # ------------------------------
 html_template = f"""
 <!doctype html>
@@ -118,7 +110,6 @@ html_template = f"""
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   margin-top: 25px;
 }}
 #bot-button {{
@@ -138,10 +129,10 @@ html_template = f"""
   transform: scale(1.15);
   box-shadow: 0 0 40px rgba(0,0,0,0.6);
 }}
-#chat-box {{
+#chat-box, #support-box {{
   width: 400px;
   height: 340px;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.95);
   border-radius: 15px;
   box-shadow: 0 0 15px rgba(0,0,0,0.4);
   padding: 12px;
@@ -150,7 +141,7 @@ html_template = f"""
   flex-direction: column;
   font-family: sans-serif;
 }}
-#chat-log {{
+#chat-log, #support-log {{
   flex: 1;
   overflow-y: auto;
   margin-bottom: 8px;
@@ -165,24 +156,33 @@ html_template = f"""
 .chat-message.bot {{
   background: #e8f5e9;
 }}
-#controls {{
+#controls, #support-controls {{
   display: flex;
   gap: 4px;
 }}
-#chat-input {{
+input[type=text] {{
   flex: 1;
   padding: 10px;
   border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 15px;
 }}
-#chat-send {{
+button {{
   padding: 10px;
   border-radius: 6px;
   background: #0288d1;
   color: #fff;
   border: none;
   cursor: pointer;
+}}
+#tech-btn {{
+  background: #43a047;
+  margin-top: 5px;
+  display: none;
+}}
+#back-btn {{
+  background: #f57c00;
+  margin-top: 5px;
 }}
 </style>
 </head>
@@ -195,6 +195,18 @@ html_template = f"""
       <input id="chat-input" type="text" placeholder="Type your question..." />
       <button id="chat-send">Send</button>
     </div>
+    <button id="tech-btn">💬 Contact Live Tech Support</button>
+  </div>
+
+  <div id="support-box">
+    <div id="support-log">
+      <div class="chat-message bot"><b>Pranay:</b> Hi, this is Pranay. How can I help you today?</div>
+    </div>
+    <div id="support-controls">
+      <input id="support-input" type="text" placeholder="Type your message..." />
+      <button id="support-send">Send</button>
+    </div>
+    <button id="back-btn">🔙 Back to Bot Chat</button>
   </div>
 </div>
 
@@ -202,22 +214,23 @@ html_template = f"""
 const QA = {qa_json_str};
 const botBtn = document.getElementById('bot-button');
 const chatBox = document.getElementById('chat-box');
+const supportBox = document.getElementById('support-box');
 const chatLog = document.getElementById('chat-log');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
+const techBtn = document.getElementById('tech-btn');
+const supportLog = document.getElementById('support-log');
+const supportInput = document.getElementById('support-input');
+const supportSend = document.getElementById('support-send');
+const backBtn = document.getElementById('back-btn');
 
 function findAnswer(query) {{
-  if (!QA || QA.length === 0) return null;
   query = query.trim().toLowerCase();
   for (let i = 0; i < QA.length; i++) {{
-    if (QA[i].question.trim().toLowerCase() === query) {{
-      return QA[i].answer;
-    }}
+    if (QA[i].question.trim().toLowerCase() === query) return QA[i].answer;
   }}
   for (let i = 0; i < QA.length; i++) {{
-    if (QA[i].question.trim().toLowerCase().includes(query)) {{
-      return QA[i].answer;
-    }}
+    if (QA[i].question.trim().toLowerCase().includes(query)) return QA[i].answer;
   }}
   return null;
 }}
@@ -240,26 +253,41 @@ function handleSend() {{
   const reply = answer ? answer : "Sorry, I don’t have an answer for this.";
   chatLog.innerHTML += '<div class="chat-message bot"><b>Bot:</b> ' + reply + '</div>';
   chatLog.scrollTop = chatLog.scrollHeight;
-  window.parent.postMessage(
-    {{ "isStreamlitMessage": true, "type": "streamlit:setComponentValue", "value": text }},
-    "*"
-  );
+
+  if (reply.includes("Sorry")) {{
+    techBtn.style.display = 'block';
+  }}
 }}
 
 chatSend.addEventListener('click', handleSend);
 chatInput.addEventListener('keydown', e => {{ if (e.key === 'Enter') handleSend(); }});
+
+techBtn.addEventListener('click', () => {{
+  chatBox.style.display = 'none';
+  supportBox.style.display = 'flex';
+}});
+
+backBtn.addEventListener('click', () => {{
+  supportBox.style.display = 'none';
+  chatBox.style.display = 'flex';
+}});
+
+function handleSupportSend() {{
+  const text = supportInput.value.trim();
+  if (!text) return;
+  supportLog.innerHTML += '<div class="chat-message"><b>You:</b> ' + text + '</div>';
+  supportInput.value = '';
+  supportLog.scrollTop = supportLog.scrollHeight;
+}}
+
+supportSend.addEventListener('click', handleSupportSend);
+supportInput.addEventListener('keydown', e => {{ if (e.key === 'Enter') handleSupportSend(); }});
 </script>
 </body>
 </html>
 """
 
+# ------------------------------
 # Render inside Streamlit
-user_input = components.html(html_template, height=650)
 # ------------------------------
-# Display Python-side response (only if a valid string was returned)
-# ------------------------------
-if isinstance(user_input, str) and user_input.strip():
-    msg = user_input.strip()
-    reply = get_bot_response(msg, qa_records)
-    if reply and "Sorry" not in reply:
-        st.markdown(f"**🤖 Bot:** {reply}")
+components.html(html_template, height=700)
