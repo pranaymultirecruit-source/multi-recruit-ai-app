@@ -8,7 +8,21 @@ import streamlit.components.v1 as components
 import base64
 
 # ------------------------------
-# Helpers
+# Setup base path early
+# ------------------------------
+load_dotenv()
+base_path = os.path.dirname(os.path.abspath(__file__))
+
+# Chat file path
+chat_file = os.path.join(base_path, "support_chat.json")
+
+# Ensure chat file exists
+if not os.path.exists(chat_file):
+    with open(chat_file, "w", encoding="utf-8") as f:
+        json.dump({"messages": []}, f, indent=2)
+
+# ------------------------------
+# Helper for bot responses
 # ------------------------------
 def get_bot_response(user_message: str, qa_records: list):
     """Find matching answer from CSV data."""
@@ -24,18 +38,12 @@ def get_bot_response(user_message: str, qa_records: list):
     return "Sorry, I don’t have an answer for this."
 
 # ------------------------------
-# Setup & Background
+# Page Config and Background
 # ------------------------------
-load_dotenv()
-base_path = os.path.dirname(os.path.abspath(__file__))
-
-bg_path = r"C:\Users\hp\Downloads\MR logo BG for Local host.png"
-
 st.set_page_config(page_title="MultiRecruit AI", page_icon="🤖", layout="wide")
+bg_path = os.path.join(base_path, "MR logo BG for Local host.png")
 
-# ------------------------------
-# Page background setup
-# ------------------------------
+
 def set_background(image_path):
     if os.path.exists(image_path):
         with open(image_path, "rb") as img_file:
@@ -58,8 +66,6 @@ def set_background(image_path):
             """,
             unsafe_allow_html=True
         )
-    else:
-        st.warning(f"⚠️ Background image not found: {image_path}")
 
 set_background(bg_path)
 
@@ -75,7 +81,7 @@ st.sidebar.radio(
 )
 
 # ------------------------------
-# Load CSV
+# Load CSV (Q&A)
 # ------------------------------
 csv_path = os.path.join(base_path, "multi_recruit_ai_full_qa.csv")
 qa_records = []
@@ -98,7 +104,7 @@ else:
 qa_json_str = json.dumps(qa_records)
 
 # ------------------------------
-# Bot + Tech Support HTML
+# Bot + Tech Support HTML/JS
 # ------------------------------
 html_template = f"""
 <!doctype html>
@@ -278,6 +284,11 @@ function handleSupportSend() {{
   supportLog.innerHTML += '<div class="chat-message"><b>You:</b> ' + text + '</div>';
   supportInput.value = '';
   supportLog.scrollTop = supportLog.scrollHeight;
+
+  window.parent.postMessage(
+    {{ "isStreamlitMessage": true, "type": "streamlit:setComponentValue", "value": "support:" + text }},
+    "*"
+  );
 }}
 
 supportSend.addEventListener('click', handleSupportSend);
@@ -288,6 +299,22 @@ supportInput.addEventListener('keydown', e => {{ if (e.key === 'Enter') handleSu
 """
 
 # ------------------------------
-# Render inside Streamlit
+# Render Chat HTML
 # ------------------------------
-components.html(html_template, height=700)
+user_input = components.html(html_template, height=700)
+
+# ------------------------------
+# Save Tech Support Messages
+# ------------------------------
+if isinstance(user_input, str) and user_input.startswith("support:"):
+    message = user_input.replace("support:", "").strip()
+    if message:
+        try:
+            with open(chat_file, "r+", encoding="utf-8") as f:
+                data = json.load(f)
+                data["messages"].append({"sender": "user", "text": message})
+                f.seek(0)
+                json.dump(data, f, indent=2)
+            st.success("📨 Message sent to Tech Support!")
+        except Exception as e:
+            st.error(f"⚠️ Could not save support message: {e}")
