@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import streamlit.components.v1 as components
 import base64
 from pathlib import Path
+import time, uuid
 
 # ------------------------------
 # Setup
@@ -220,7 +221,11 @@ button {{
       <input id="chat-input" type="text" placeholder="Type your question..." />
       <button id="chat-send">Send</button>
     </div>
-    <button id="tech-btn">💬 Contact Live Tech Support</button>
+ <button id="tech-btn" onclick="window.open('http://localhost:8503', '_blank');">
+  💬 Contact Live Tech Support
+</button>
+>
+
   </div>
 
   <div id="support-box">
@@ -322,17 +327,86 @@ supportInput.addEventListener('keydown', e => {{ if (e.key === 'Enter') handleSu
 user_input = components.html(html_template, height=700)
 
 # ------------------------------
-# Save Tech Support Messages
 # ------------------------------
+# Save Tech Support Messages + Show Replies
+# ------------------------------
+import time, uuid
+
+# Create unique ticket for this user
+if "ticket_id" not in st.session_state:
+    st.session_state.ticket_id = f"TCKT-{time.strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
+ticket_id = st.session_state.ticket_id
+
+st.markdown(f"**🎟️ Your Ticket ID:** `{ticket_id}` — Use this if Tech Support contacts you.")
+
+# ---- Load & Save Chat Helper ----
+def load_all_tickets():
+    try:
+        with open(chat_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except:
+        return {}
+
+def save_all_tickets(data):
+    with open(chat_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+tickets = load_all_tickets()
+
+# ---- Save user message ----
+# ---- Save user message ----
 if isinstance(user_input, str) and user_input.startswith("support:"):
     message = user_input.replace("support:", "").strip()
     if message:
+        # Load existing messages
         try:
-            with open(chat_file, "r+", encoding="utf-8") as f:
+            with open("support_chat.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
-                data["messages"].append({"sender": "user", "text": message})
-                f.seek(0)
-                json.dump(data, f, indent=2)
-            st.success("📨 Message sent to Tech Support!")
-        except Exception as e:
-            st.error(f"⚠️ Could not save support message: {e}")
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = {"messages": []}
+
+        # Ensure list exists
+        if "messages" not in data:
+            data["messages"] = []
+
+        # Append the user's message with their ticket ID
+        data["messages"].append({
+            "ticket_id": ticket_id,
+            "sender": "user",
+            "text": message,
+            "time": time.strftime("%H:%M:%S")
+        })
+
+        # Save back
+        with open("support_chat.json", "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
+        st.success("📨 Message sent to Tech Support!")
+
+# ---- Display replies ----
+try:
+    with open("support_chat.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+        messages = [m for m in data.get("messages", []) if m.get("ticket_id") == ticket_id]
+except (FileNotFoundError, json.JSONDecodeError):
+    messages = []
+
+if messages:
+    st.markdown("---")
+    st.subheader("💬 Live Tech Support Chat")
+
+    for msg in messages[-20:]:
+        if msg["sender"] == "user":
+            st.markdown(
+                f"<div style='background:#e3f2fd;padding:8px;border-radius:8px;margin:5px;max-width:80%'>🧑 <b>You:</b> {msg['text']}</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                f"<div style='background:#e8f5e9;padding:8px;border-radius:8px;margin:5px;max-width:80%;margin-left:auto'>💬 <b>Pranay:</b> {msg['text']}</div>",
+                unsafe_allow_html=True
+            )
+
+    time.sleep(3)
+    st.rerun()
