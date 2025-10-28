@@ -356,30 +356,34 @@ tickets = load_all_tickets()
 
 # ---- Save user message ----
 # ---- Save user message ----
+# ---- Save user message (compatible with admin dashboard) ----
 if isinstance(user_input, str) and user_input.startswith("support:"):
     message = user_input.replace("support:", "").strip()
     if message:
-        # Load existing messages
-        try:
-            with open("support_chat.json", "r", encoding="utf-8") as f:
+        ticket_id = "TCKT-001"  # Or dynamically generate if needed
+        chat_file = os.path.join(base_path, "support_chat.json")
+
+        # Load or create structure
+        if os.path.exists(chat_file):
+            with open(chat_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            data = {"messages": []}
+        else:
+            data = {"tickets": {}}
 
-        # Ensure list exists
-        if "messages" not in data:
-            data["messages"] = []
+        if "tickets" not in data:
+            data["tickets"] = {}
 
-        # Append the user's message with their ticket ID
-        data["messages"].append({
-            "ticket_id": ticket_id,
+        if ticket_id not in data["tickets"]:
+            data["tickets"][ticket_id] = {"messages": []}
+
+        # Append user message
+        data["tickets"][ticket_id]["messages"].append({
             "sender": "user",
-            "text": message,
-            "time": time.strftime("%H:%M:%S")
+            "text": message
         })
 
         # Save back
-        with open("support_chat.json", "w", encoding="utf-8") as f:
+        with open(chat_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
         st.success("📨 Message sent to Tech Support!")
