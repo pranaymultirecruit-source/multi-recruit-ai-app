@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 import os
+import time
 from datetime import datetime
 
 # --------------------------
@@ -86,26 +87,28 @@ with col1:
             })
             save_chat(data)
             st.success("✅ Message sent!")
-            st.rerun()
+            st.experimental_rerun()
 
 with col2:
     if admin_mode and st.button("🗑️ Clear Chat"):
         save_chat({"messages": []})
         st.warning("🧹 Chat cleared!")
-        st.rerun()
+        st.experimental_rerun()
 
 # --------------------------
-# Auto-refresh setup
+# Auto-refresh setup (no external package)
 # --------------------------
-from streamlit_autorefresh import st_autorefresh
-
 st.markdown(
     f"<p style='color:gray;font-size:12px'>🔄 Auto-refreshing every {REFRESH_INTERVAL} seconds...</p>",
     unsafe_allow_html=True
 )
 
-# Trigger refresh every REFRESH_INTERVAL seconds
-count = st_autorefresh(interval=REFRESH_INTERVAL * 1000, key="refresh_counter")
+# Use session_state to avoid tight infinite loop
+if "last_refresh" not in st.session_state:
+    st.session_state["last_refresh"] = time.time()
+else:
+    if time.time() - st.session_state["last_refresh"] > REFRESH_INTERVAL:
+        st.session_state["last_refresh"] = time.time()
+        st.experimental_rerun()
 
 st.caption(f"⏱️ Last refreshed at {datetime.now().strftime('%H:%M:%S')}")
-
