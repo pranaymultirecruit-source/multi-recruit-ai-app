@@ -8,6 +8,7 @@ import streamlit.components.v1 as components
 import base64
 from pathlib import Path
 import time, uuid
+import webbrowser
 
 # ------------------------------
 # Setup
@@ -221,7 +222,7 @@ button {{
       <input id="chat-input" type="text" placeholder="Type your question..." />
       <button id="chat-send">Send</button>
     </div>
- <button id="tech-btn" onclick="window.open('http://localhost:8503', '_blank');">
+ <button id="tech-btn" onclick="window.open('https://multirecruittechsupport.streamlit.app', '_blank');">
   💬 Contact Live Tech Support
 </button>
 >

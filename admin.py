@@ -87,13 +87,13 @@ with col1:
             })
             save_chat(data)
             st.success("✅ Message sent!")
-            st.experimental_rerun()
+            st.rerun()
 
 with col2:
     if admin_mode and st.button("🗑️ Clear Chat"):
         save_chat({"messages": []})
         st.warning("🧹 Chat cleared!")
-        st.experimental_rerun()
+        st.rerun()
 
 # --------------------------
 # Auto-refresh setup (no external package)
@@ -109,6 +109,6 @@ if "last_refresh" not in st.session_state:
 else:
     if time.time() - st.session_state["last_refresh"] > REFRESH_INTERVAL:
         st.session_state["last_refresh"] = time.time()
-        st.experimental_rerun()
+        st.rerun()
 
 st.caption(f"⏱️ Last refreshed at {datetime.now().strftime('%H:%M:%S')}")
