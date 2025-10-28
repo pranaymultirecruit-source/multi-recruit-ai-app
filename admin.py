@@ -3,53 +3,109 @@ import json
 import os
 from datetime import datetime
 
-st.set_page_config(page_title="Tech Support Dashboard", page_icon="🧑‍💻", layout="wide")
+# --------------------------
+# CONFIG
+# --------------------------
+CHAT_FILE = "support_chat.json"
+ADMIN_PASSWORD = "pranay@8503"  # 🔒 Change this password
+REFRESH_INTERVAL = 5  # seconds (auto-refresh delay)
 
-chat_file = "support_chat.json"
+st.set_page_config(page_title="💬 Live Tech Support", page_icon="💬", layout="centered")
 
-st.title("💬 Tech Support Dashboard")
-st.write("View user messages and reply to them instantly from here.")
-
+# --------------------------
 # Ensure chat file exists
-if not os.path.exists(chat_file):
-    with open(chat_file, "w", encoding="utf-8") as f:
-        json.dump([], f)
+# --------------------------
+if not os.path.exists(CHAT_FILE):
+    with open(CHAT_FILE, "w") as f:
+        json.dump({"messages": []}, f)
 
-# Load chat
-with open(chat_file, "r", encoding="utf-8") as f:
-    try:
-        chat_data = json.load(f)
-    except json.JSONDecodeError:
-        chat_data = []
+# --------------------------
+# Load / Save helpers
+# --------------------------
+def load_chat():
+    with open(CHAT_FILE, "r") as f:
+        data = json.load(f)
+    if "messages" not in data:
+        data["messages"] = []
+    return data
 
-# Display chat
-st.subheader("📨 Chat Messages")
-if not chat_data:
-    st.info("No messages yet. Wait for users to contact tech support.")
-else:
-    for msg in chat_data[-10:]:
-        if msg["sender"] == "user":
-            st.markdown(f"🧑‍💼 **User:** {msg['text']}  \n🕒 {msg['timestamp']}")
-        elif msg["sender"] == "admin":
-            st.markdown(f"🤖 **You:** {msg['text']}  \n🕒 {msg['timestamp']}")
-        st.markdown("---")
+def save_chat(data):
+    with open(CHAT_FILE, "w") as f:
+        json.dump(data, f, indent=2)
 
-# Input box to reply
-reply_text = st.text_input("✏️ Type your reply here:")
-if st.button("Send Reply"):
-    if reply_text.strip():
-        new_msg = {
-            "sender": "admin",
-            "text": reply_text.strip(),
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        chat_data.append(new_msg)
-        with open(chat_file, "w", encoding="utf-8") as f:
-            json.dump(chat_data, f, indent=2)
-        st.success("✅ Reply sent!")
+# --------------------------
+# Sidebar: Admin Login
+# --------------------------
+st.sidebar.header("⚙️ Settings")
+
+admin_mode = False
+if st.sidebar.checkbox("Enable Admin Mode"):
+    password = st.sidebar.text_input("Enter Admin Password", type="password")
+    if password == ADMIN_PASSWORD:
+        st.sidebar.success("✅ Access granted — Admin Mode Active")
+        admin_mode = True
+    elif password:
+        st.sidebar.error("❌ Incorrect Password")
+
+if not admin_mode:
+    st.sidebar.info("👤 User Mode — You can message tech support.")
+
+# --------------------------
+# Main Interface
+# --------------------------
+st.title("💬 Live Tech Support")
+
+data = load_chat()
+st.markdown("### Chat History")
+
+# Display chat messages
+for msg in data["messages"]:
+    sender = "🧑 User" if msg["role"] == "user" else "👨‍💻 Admin"
+    color = "#f0f2f6" if msg["role"] == "user" else "#e8f5e9"
+    st.markdown(
+        f"<div style='background:{color};padding:10px;border-radius:8px;margin:6px 0;'>"
+        f"<b>{sender}:</b> {msg['text']}</div>",
+        unsafe_allow_html=True
+    )
+
+# --------------------------
+# Message Input
+# --------------------------
+user_input = st.text_input("Type your message here...")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("Send"):
+        if user_input.strip():
+            role = "admin" if admin_mode else "user"
+            data["messages"].append({
+                "role": role,
+                "text": user_input.strip(),
+                "time": str(datetime.now())
+            })
+            save_chat(data)
+            st.success("✅ Message sent!")
+            st.rerun()
+
+with col2:
+    if admin_mode and st.button("🗑️ Clear Chat"):
+        save_chat({"messages": []})
+        st.warning("🧹 Chat cleared!")
         st.rerun()
-    else:
-        st.warning("Please type a message before sending.")
 
-st.markdown("---")
-st.caption("This dashboard automatically updates when reloaded. (You can press **R** to refresh.)")
+# --------------------------
+# Auto-refresh setup
+# --------------------------
+from streamlit_autorefresh import st_autorefresh
+
+st.markdown(
+    f"<p style='color:gray;font-size:12px'>🔄 Auto-refreshing every {REFRESH_INTERVAL} seconds...</p>",
+    unsafe_allow_html=True
+)
+
+# Trigger refresh every REFRESH_INTERVAL seconds
+count = st_autorefresh(interval=REFRESH_INTERVAL * 1000, key="refresh_counter")
+
+st.caption(f"⏱️ Last refreshed at {datetime.now().strftime('%H:%M:%S')}")
+
