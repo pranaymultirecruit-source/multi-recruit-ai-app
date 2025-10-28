@@ -222,7 +222,7 @@ button {{
       <input id="chat-input" type="text" placeholder="Type your question..." />
       <button id="chat-send">Send</button>
     </div>
- <button id="tech-btn" onclick="window.open('https://multirecruittechsupport.streamlit.app', '_blank');">
+<button id="tech-btn" onclick="window.open('https://multi-recruit-ai-app-admin.streamlit.app', '_blank');">
   💬 Contact Live Tech Support
 </button>
 >
