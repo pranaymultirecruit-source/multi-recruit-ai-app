@@ -9,6 +9,8 @@ import base64
 from pathlib import Path
 import time, uuid
 import webbrowser
+from streamlit_lottie import st_lottie
+import requests
 
 # ------------------------------
 # Setup
@@ -222,16 +224,15 @@ button {{
       <input id="chat-input" type="text" placeholder="Type your question..." />
       <button id="chat-send">Send</button>
     </div>
-<button id="tech-btn" onclick="window.open('https://multi-recruit-ai-app-admin.streamlit.app', '_blank');">
-  💬 Contact Live Tech Support
-</button>
->
-
+<button id="tech-btn" onclick="window.open('https://multi-recruit-ai-app-bxsykziqvchzn4qxzb6q6v.streamlit.app', '_blank');">
+      💬 Contact Live Tech Support
+    </button>
+""", unsafe_allow_html=True)
   </div>
 
   <div id="support-box">
     <div id="support-log">
-      <div class="chat-message bot"><b>Pranay:</b> Hi, this is Pranay. How can I help you today?</div>
+      <div class="chat-message bot"><b>bot:</b> Hi, this is MR Assistant. How can I help you today?</div>
     </div>
     <div id="support-controls">
       <input id="support-input" type="text" placeholder="Type your message..." />
