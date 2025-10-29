@@ -227,7 +227,6 @@ button {{
 <button id="tech-btn" onclick="window.open('https://multi-recruit-ai-app-bxsykziqvchzn4qxzb6q6v.streamlit.app', '_blank');">
       💬 Contact Live Tech Support
     </button>
-""", unsafe_allow_html=True)
   </div>
 
   <div id="support-box">
