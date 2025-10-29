@@ -127,7 +127,7 @@ data = load_chat()
 
 # If not admin, validate format
 if not is_admin and not TICKET_REGEX.match(ticket_or_key):
-    st.error("Please enter a correct Ticket ID in the format: TCKT-YYYYMMDD-XXXXXX (e.g. TCKT-20251029-1A2B3C).")
+    st.error("Please enter a correct Ticket ID ")
     st.stop()
 
 # Ensure the user's ticket exists
