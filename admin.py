@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 import os
+import re
 import time
 from datetime import datetime
 
@@ -11,22 +12,28 @@ CHAT_FILE = "support_chat.json"
 REFRESH_INTERVAL = 2  # seconds (auto-refresh)
 ADMIN_KEY = "pranay@8503"
 
-st.set_page_config(page_title="💬 Live Tech Support", page_icon="💬")
+# Expected ticket format: TCKT-YYYYMMDD-XXXXXX (6 alphanumeric uppercase)
+TICKET_REGEX = re.compile(r"^TCKT-\d{8}-[A-Z0-9]{6}$")
+
+st.set_page_config(page_title="💬 Live Tech Support", page_icon="💬", layout="wide")
 
 # --------------------------
-# Helpers: load/save and normalize
+# Helpers: load/save and normalize (keeps backward compatibility)
 # --------------------------
 def load_raw():
     if not os.path.exists(CHAT_FILE):
         return {}
     try:
-        with open(CHAT_FILE, "r") as f:
+        with open(CHAT_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return {}
 
 def normalize_data(raw):
-    """Ensure consistent structure for all tickets"""
+    """
+    Normalize a variety of possible stored formats into:
+    { ticket_id: { "messages": [ {role, text, time}, ... ], "closed": bool, "created_at": str } }
+    """
     if raw is None:
         return {}
     if isinstance(raw, list):
@@ -38,7 +45,6 @@ def normalize_data(raw):
                 "created_at": str(datetime.now())
             }
         }
-
     if isinstance(raw, dict):
         normalized = {}
         for k, v in raw.items():
@@ -90,146 +96,194 @@ def normalize_data(raw):
                 "closed": False,
                 "created_at": str(datetime.now())
             }
-
         return normalized
     return {}
 
 def load_chat():
     raw = load_raw()
     normalized = normalize_data(raw)
+    # Ensure file exists with normalized structure
     save_chat(normalized)
     return normalized
 
 def save_chat(data):
-    with open(CHAT_FILE, "w") as f:
+    with open(CHAT_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
 # --------------------------
-# UI Title and input
+# Top input: admin key or ticket id
 # --------------------------
 st.title("💬 Live Tech Support")
-
 ticket_or_key = st.text_input("🔑 Enter Ticket ID ")
 
 if not ticket_or_key:
     st.stop()
 
-# --------------------------
+ticket_or_key = ticket_or_key.strip()
+is_admin = ticket_or_key == ADMIN_KEY
+
 # Load data
-# --------------------------
 data = load_chat()
 
-# --------------------------
-# ADMIN MODE
-# --------------------------
-if ticket_or_key.strip() == ADMIN_KEY:
-    st.success("✅ Admin Mode Active — Manage Tickets Below")
+# If not admin, validate format
+if not is_admin and not TICKET_REGEX.match(ticket_or_key):
+    st.error("Please enter a correct Ticket ID in the format: TCKT-YYYYMMDD-XXXXXX (e.g. TCKT-20251029-1A2B3C).")
+    st.stop()
 
-    open_tickets = [tid for tid, info in data.items() if not info.get("closed")]
-    closed_tickets = [tid for tid, info in data.items() if info.get("closed")]
-    ticket_choices = open_tickets + closed_tickets
-
-    if not ticket_choices:
-        st.info("No tickets found.")
-        st.stop()
-
-    selected_ticket = st.selectbox("🎟️ Select a Ticket to View", ticket_choices)
-    ticket_info = data.get(selected_ticket, {"messages": [], "closed": False, "created_at": str(datetime.now())})
-
-    status = "Closed" if ticket_info.get("closed") else "Open"
-    st.markdown(f"### 💬 Chat for Ticket: `{selected_ticket}` — **{status}**")
-
-    # Display chat
-    for msg in ticket_info.get("messages", []):
-        sender = "🧑 User" if msg.get("role") == "user" else "👨‍💻 Admin"
-        text = msg.get("text", "")
-        time_str = msg.get("time", "")
-        color = "#f0f2f6" if "User" in sender else "#e8f5e9"
-        st.markdown(
-            f"<div style='background:{color};padding:10px;border-radius:8px;margin:6px 0;'>"
-            f"<b>{sender}:</b> {text}"
-            f"<div style='font-size:11px;color:#666;margin-top:4px;'>{time_str}</div></div>",
-            unsafe_allow_html=True
-        )
-
-    admin_msg = st.text_input("💬 Type your reply to this user:", key="admin_msg_input")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Send Reply"):
-            if admin_msg.strip():
-                ticket_info["messages"].append({
-                    "role": "admin",
-                    "text": admin_msg.strip(),
-                    "time": str(datetime.now())
-                })
-                data[selected_ticket] = ticket_info
-                save_chat(data)
-                st.success("✅ Reply sent!")
-                st.session_state.admin_msg_input = ""  # clear input box
-                st.rerun()
-    with col2:
-        if st.button("✅ Close Ticket"):
-            ticket_info["closed"] = True
-            data[selected_ticket] = ticket_info
-            save_chat(data)
-            st.warning(f"🎟️ Ticket `{selected_ticket}` marked closed.")
-            st.rerun()
-
-    st.markdown("---")
-    st.markdown("#### Open Tickets")
-    st.write(", ".join(open_tickets) if open_tickets else "None")
-    st.markdown("#### Closed Tickets")
-    st.write(", ".join(closed_tickets) if closed_tickets else "None")
-
-# --------------------------
-# USER MODE
-# --------------------------
-else:
-    ticket_id = ticket_or_key.strip()
-    if ticket_id not in data:
-        data[ticket_id] = {"messages": [], "closed": False, "created_at": str(datetime.now())}
+# Ensure the user's ticket exists
+if not is_admin:
+    if ticket_or_key not in data:
+        data[ticket_or_key] = {"messages": [], "closed": False, "created_at": str(datetime.now())}
         save_chat(data)
 
-    ticket_info = data[ticket_id]
-    if ticket_info.get("closed"):
-        st.warning("🚫 This ticket has been closed by admin.")
+# Build lists
+open_tickets = [tid for tid, info in data.items() if not info.get("closed")]
+closed_tickets = [tid for tid, info in data.items() if info.get("closed")]
 
-    st.markdown(f"### 🎟️ Chat for Ticket: `{ticket_id}`")
+# --------------------------
+# Admin layout: left open, center chat, right closed
+# --------------------------
+if is_admin:
+    # Admin interface (banner removed)
+    if "admin_selected_ticket" not in st.session_state or st.session_state.admin_selected_ticket not in open_tickets:
+        st.session_state.admin_selected_ticket = open_tickets[0] if open_tickets else None
 
+    left_col, mid_col, right_col = st.columns([1.2, 2.6, 1.2])
+
+    # LEFT: Open tickets
+    with left_col:
+        st.markdown("### 📂 Open Tickets")
+        if not open_tickets:
+            st.info("No open tickets.")
+        else:
+            sel = st.radio("Select an open ticket", options=open_tickets, index=open_tickets.index(st.session_state.admin_selected_ticket) if st.session_state.admin_selected_ticket in open_tickets else 0, key="open_radio")
+            st.session_state.admin_selected_ticket = sel
+
+    # RIGHT: Closed tickets (collapsed/list)
+    with right_col:
+        st.markdown("### 📦 Closed Tickets")
+        if not closed_tickets:
+            st.info("No closed tickets.")
+        else:
+            sel_closed = st.selectbox("View closed ticket (read-only):", options=["-- select --"] + closed_tickets, index=0, key="closed_select")
+            if sel_closed and sel_closed != "-- select --":
+                st.markdown(f"#### Viewing Closed Ticket `{sel_closed}`")
+                tinfo = data.get(sel_closed, {"messages": [], "closed": True, "created_at": ""})
+                for msg in tinfo.get("messages", []):
+                    sender = "🧑 User" if msg.get("role") == "user" else "👨‍💻 Admin"
+                    bg = "#f0f2f6" if sender.startswith("🧑") else "#e8f5e9"
+                    st.markdown(
+                        f"<div style='background:{bg};padding:10px;border-radius:8px;margin:6px 0;'>"
+                        f"<b>{sender}:</b> {msg.get('text')}"
+                        f"<div style='font-size:11px;color:#666;margin-top:6px;'>{msg.get('time','')}</div></div>",
+                        unsafe_allow_html=True
+                    )
+
+    # CENTER: chat for selected open ticket
+    with mid_col:
+        selected = st.session_state.admin_selected_ticket
+        if not selected:
+            st.info("No open ticket selected.")
+        else:
+            ticket_info = data.get(selected, {"messages": [], "closed": False, "created_at": ""})
+            status = "Closed" if ticket_info.get("closed") else "Open"
+            st.markdown(f"### 💬 Ticket: `{selected}` — **{status}**")
+
+            # messages
+            for msg in ticket_info.get("messages", []):
+                sender = "🧑 User" if msg.get("role") == "user" else "👨‍💻 Admin"
+                bg = "#f0f2f6" if sender.startswith("🧑") else "#e8f5e9"
+                st.markdown(
+                    f"<div style='background:{bg};padding:10px;border-radius:8px;margin:6px 0;'>"
+                    f"<b>{sender}:</b> {msg.get('text')}"
+                    f"<div style='font-size:11px;color:#666;margin-top:6px;'>{msg.get('time','')}</div></div>",
+                    unsafe_allow_html=True
+                )
+
+            # reply input + actions
+            if ticket_info.get("closed"):
+                st.warning("This ticket has been closed. New messages are disabled.")
+            else:
+                reply_key = f"admin_reply_{selected}"
+                if reply_key not in st.session_state:
+                    st.session_state[reply_key] = ""
+                st.text_area("Reply to user:", key=reply_key, height=100)
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    if st.button("Send Reply", key=f"send_{selected}"):
+                        reply_text = st.session_state.get(reply_key, "").strip()
+                        if reply_text:
+                            ticket_info.setdefault("messages", []).append({
+                                "role": "admin",
+                                "text": reply_text,
+                                "time": str(datetime.now())
+                            })
+                            data[selected] = ticket_info
+                            save_chat(data)
+                            st.success(f"Reply sent to `{selected}`.")
+                            st.session_state[reply_key] = ""
+                            st.experimental_rerun()
+                        else:
+                            st.warning("Reply cannot be empty.")
+                with col_b:
+                    if st.button("Close Ticket", key=f"close_{selected}"):
+                        ticket_info["closed"] = True
+                        data[selected] = ticket_info
+                        save_chat(data)
+                        st.warning(f"🎟️ Ticket `{selected}` marked closed.")
+                        st.experimental_rerun()
+
+# --------------------------
+# Normal user: show only chat box (center/full width)
+# --------------------------
+else:
+    # Show only the chat interface in the center (full width)
+    st.markdown("### 💬 Live Chat")
+    ticket_id = ticket_or_key
+    ticket_info = data.get(ticket_id, {"messages": [], "closed": False, "created_at": str(datetime.now())})
+
+    status = "Closed" if ticket_info.get("closed") else "Open"
+    st.markdown(f"#### Ticket: `{ticket_id}` — **{status}**")
+
+    # Display messages
     for msg in ticket_info.get("messages", []):
         sender = "🧑 You" if msg.get("role") == "user" else "👨‍💻 Admin"
-        text = msg.get("text", "")
-        time_str = msg.get("time", "")
-        color = "#f0f2f6" if "You" in sender else "#e8f5e9"
+        bg = "#f0f2f6" if sender.startswith("🧑") else "#e8f5e9"
         st.markdown(
-            f"<div style='background:{color};padding:10px;border-radius:8px;margin:6px 0;'>"
-            f"<b>{sender}:</b> {text}"
-            f"<div style='font-size:11px;color:#666;margin-top:4px;'>{time_str}</div></div>",
+            f"<div style='background:{bg};padding:10px;border-radius:8px;margin:6px 0;'>"
+            f"<b>{sender}:</b> {msg.get('text')}"
+            f"<div style='font-size:11px;color:#666;margin-top:6px;'>{msg.get('time','')}</div></div>",
             unsafe_allow_html=True
         )
 
-    if not ticket_info.get("closed"):
-        user_msg = st.text_input("✉️ Type your message:", key="user_msg_input")
-        if st.button("Send Message"):
-            if user_msg.strip():
-                ticket_info["messages"].append({
+    if ticket_info.get("closed"):
+        st.warning("This ticket has been closed by admin. New messages are disabled.")
+    else:
+        user_key = f"user_msg_{ticket_id}"
+        if user_key not in st.session_state:
+            st.session_state[user_key] = ""
+        st.text_area("Type your message:", key=user_key, height=120)
+        if st.button("Send Message", key=f"send_user_{ticket_id}"):
+            msg_text = st.session_state.get(user_key, "").strip()
+            if msg_text:
+                ticket_info.setdefault("messages", []).append({
                     "role": "user",
-                    "text": user_msg.strip(),
+                    "text": msg_text,
                     "time": str(datetime.now())
                 })
                 data[ticket_id] = ticket_info
                 save_chat(data)
                 st.success("✅ Message sent!")
-                st.session_state.user_msg_input = ""
-                st.rerun()
-    else:
-        st.info("Ticket closed — new messages disabled.")
+                st.session_state[user_key] = ""
+                st.experimental_rerun()
+            else:
+                st.warning("Message cannot be empty.")
 
 # --------------------------
-# AUTO REFRESH
+# Auto-refresh
 # --------------------------
 st.markdown(
-    f"<p style='color:gray;font-size:12px;text-align:center;'> {REFRESH_INTERVAL} seconds...</p>",
+    f"<p style='color:gray;font-size:12px;text-align:center;'>Auto-refresh every {REFRESH_INTERVAL} seconds</p>",
     unsafe_allow_html=True
 )
 
@@ -238,4 +292,4 @@ if "last_refresh" not in st.session_state:
 else:
     if time.time() - st.session_state["last_refresh"] > REFRESH_INTERVAL:
         st.session_state["last_refresh"] = time.time()
-        st.rerun()
+        st.experimental_rerun()
