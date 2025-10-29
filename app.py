@@ -1,4 +1,3 @@
-# Updated app.py
 import streamlit as st
 from PIL import Image
 import pandas as pd
@@ -136,8 +135,10 @@ else:
 qa_json_str = json.dumps(qa_records)
 
 # ------------------------------
-# Bot + Tech Support (HTML + JS)
+# Bot + Tech Support (HTML + JS) with waving robot emoji
 # ------------------------------
+# This HTML includes a CSS-based wave animation applied to the emoji.
+# It triggers once on load (a short hello wave) and also when the user clicks the bot.
 html_template = f"""
 <!doctype html>
 <html>
@@ -162,6 +163,7 @@ html_template = f"""
   justify-content: center;
   align-items: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
 }}
 #bot-button:hover {{
   transform: scale(1.15);
@@ -222,11 +224,50 @@ button {{
   background: #f57c00;
   margin-top: 5px;
 }}
+
+/* WAVE ANIMATION */
+.wave-emoji {{
+  display: inline-block;
+  transform-origin: 70% 70%;
+}}
+@keyframes wave {{
+  0% {{ transform: rotate(0deg); }}
+  10% {{ transform: rotate(-18deg); }}
+  20% {{ transform: rotate(14deg); }}
+  30% {{ transform: rotate(-12deg); }}
+  40% {{ transform: rotate(9deg); }}
+  50% {{ transform: rotate(-6deg); }}
+  60% {{ transform: rotate(4deg); }}
+  100% {{ transform: rotate(0deg); }}
+}}
+.wave-once {{
+  animation: wave 1.2s ease-in-out 3;
+}}
+/* keep subtle hover wave */
+#bot-button:hover .wave-emoji {{
+  animation: wave 0.9s ease-in-out 1;
+}}
+/* greeting bubble */
+#greeting {{
+  position: absolute;
+  botttom: -40px;
+  right: -10px;
+  background: rgba(255,255,255,0.95);
+  padding: 6px 8px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  display: none;
+}}
 </style>
 </head>
 <body>
 <div id="bot-container">
-  <div id="bot-button">🤖</div>
+  <div id="bot-button" role="button" aria-label="Open chat">
+    <span id="greeting">Hello!</span>
+    <span id="robot" class="wave-emoji">🤖</span>
+  </div>
+
   <div id="chat-box">
     <div id="chat-log"></div>
     <div id="controls">
@@ -263,6 +304,8 @@ const supportLog = document.getElementById('support-log');
 const supportInput = document.getElementById('support-input');
 const supportSend = document.getElementById('support-send');
 const backBtn = document.getElementById('back-btn');
+const robot = document.getElementById('robot');
+const greeting = document.getElementById('greeting');
 
 function findAnswer(query) {{
   query = query.trim().toLowerCase();
@@ -275,7 +318,31 @@ function findAnswer(query) {{
   return null;
 }}
 
+function showGreetingOnce() {{
+  // show greeting bubble briefly
+  greeting.style.display = 'block';
+  setTimeout(() => {{ greeting.style.display = 'none'; }}, 1800);
+}}
+
+function doWaveOnce() {{
+  // add class that triggers the animation once, then remove it
+  robot.classList.add('wave-once');
+  // ensure it'll be removable after animation ends
+  setTimeout(() => {{ robot.classList.remove('wave-once'); }}, 1400);
+}}
+
+// initial friendly wave + greeting when the page loads
+window.addEventListener('load', () => {{
+  // short delay so animation is noticeable
+  setTimeout(() => {{
+    showGreetingOnce();
+    doWaveOnce();
+  }}, 700);
+}});
+
 botBtn.addEventListener('click', () => {{
+  // wave on click and toggle chat
+  doWaveOnce();
   if (chatBox.style.display === 'none' || chatBox.style.display === '') {{
     chatBox.style.display = 'flex';
     chatLog.innerHTML = '<div class="chat-message bot"><b>Bot:</b> Hi, how can I help you?</div>';
@@ -336,7 +403,6 @@ supportInput.addEventListener('keydown', e => {{ if (e.key === 'Enter') handleSu
 # ------------------------------
 user_input = components.html(html_template, height=700)
 
-# ------------------------------
 # ------------------------------
 # Save Tech Support Messages + Show Replies
 # ------------------------------
