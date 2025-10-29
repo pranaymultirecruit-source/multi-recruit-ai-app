@@ -224,9 +224,11 @@ button {{
       <input id="chat-input" type="text" placeholder="Type your question..." />
       <button id="chat-send">Send</button>
     </div>
-<button id="tech-btn" onclick="window.open('https://multi-recruit-ai-app-bxsykziqvchzn4qxzb6q6v.streamlit.app', '_blank');">
-      💬 Contact Live Tech Support
-    </button>
+<button id="tech-btn" onclick="window.open('https://multi-recruit-ai-app-bxsykziqvchzn4qxzb6q6v.streamlit.app');">
+  💬 Contact Live Tech Support
+</button>
+>
+
   </div>
 
   <div id="support-box">
