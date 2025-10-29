@@ -1,3 +1,4 @@
+# Updated app.py
 import streamlit as st
 from PIL import Image
 import pandas as pd
@@ -7,10 +8,18 @@ from dotenv import load_dotenv
 import streamlit.components.v1 as components
 import base64
 from pathlib import Path
-import time, uuid
+import time
+import uuid
 import webbrowser
-from streamlit_lottie import st_lottie
 import requests
+
+# Try to import streamlit_lottie but don't crash if it's missing
+try:
+    from streamlit_lottie import st_lottie
+except Exception:
+    # Fallback no-op function so app continues to run without the package
+    def st_lottie(*args, **kwargs):
+        return None
 
 # ------------------------------
 # Setup
@@ -19,10 +28,10 @@ load_dotenv()
 base_path = os.path.dirname(os.path.abspath(__file__))
 chat_file = os.path.join(base_path, "support_chat.json")
 
-# Ensure chat file exists
+# Ensure chat file exists and uses the tickets structure
 if not os.path.exists(chat_file):
     with open(chat_file, "w", encoding="utf-8") as f:
-        json.dump({"messages": []}, f, indent=2)
+        json.dump({"tickets": {}}, f, indent=2)
 
 # ------------------------------
 # Helper: Bot response logic
@@ -224,11 +233,9 @@ button {{
       <input id="chat-input" type="text" placeholder="Type your question..." />
       <button id="chat-send">Send</button>
     </div>
-<button id="tech-btn" onclick="window.open('https://multi-recruit-ai-app-bxsykziqvchzn4qxzb6q6v.streamlit.app');">
-  💬 Contact Live Tech Support
-</button>
->
-
+    <button id="tech-btn" onclick="window.open('https://multi-recruit-ai-app-bxsykziqvchzn4qxzb6q6v.streamlit.app');">
+      💬 Contact Live Tech Support
+    </button>
   </div>
 
   <div id="support-box">
@@ -333,7 +340,6 @@ user_input = components.html(html_template, height=700)
 # ------------------------------
 # Save Tech Support Messages + Show Replies
 # ------------------------------
-import time, uuid
 
 # Create unique ticket for this user
 if "ticket_id" not in st.session_state:
@@ -347,55 +353,54 @@ def load_all_tickets():
     try:
         with open(chat_file, "r", encoding="utf-8") as f:
             data = json.load(f)
-            return data if isinstance(data, dict) else {}
+            if isinstance(data, dict):
+                # ensure a tickets dict exists
+                if "tickets" not in data:
+                    data["tickets"] = {}
+                return data
+            else:
+                return {"tickets": {}}
     except:
-        return {}
+        return {"tickets": {}}
 
 def save_all_tickets(data):
     with open(chat_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-tickets = load_all_tickets()
+tickets_data = load_all_tickets()
 
-# ---- Save user message ----
-# ---- Save user message ----
 # ---- Save user message (compatible with admin dashboard) ----
 if isinstance(user_input, str) and user_input.startswith("support:"):
     message = user_input.replace("support:", "").strip()
     if message:
-        ticket_id = "TCKT-001"  # Or dynamically generate if needed
-        chat_file = os.path.join(base_path, "support_chat.json")
+        # Use the session ticket id so messages are tied to the user session
+        ticket_id = st.session_state.ticket_id
 
-        # Load or create structure
-        if os.path.exists(chat_file):
-            with open(chat_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        else:
-            data = {"tickets": {}}
+        # Ensure tickets dict exists
+        if "tickets" not in tickets_data:
+            tickets_data["tickets"] = {}
 
-        if "tickets" not in data:
-            data["tickets"] = {}
-
-        if ticket_id not in data["tickets"]:
-            data["tickets"][ticket_id] = {"messages": []}
+        if ticket_id not in tickets_data["tickets"]:
+            tickets_data["tickets"][ticket_id] = {"messages": []}
 
         # Append user message
-        data["tickets"][ticket_id]["messages"].append({
+        tickets_data["tickets"][ticket_id]["messages"].append({
             "sender": "user",
-            "text": message
+            "text": message,
+            "timestamp": int(time.time())
         })
 
         # Save back
-        with open(chat_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+        save_all_tickets(tickets_data)
 
         st.success("📨 Message sent to Tech Support!")
 
 # ---- Display replies ----
 try:
-    with open("support_chat.json", "r", encoding="utf-8") as f:
+    with open(chat_file, "r", encoding="utf-8") as f:
         data = json.load(f)
-        messages = [m for m in data.get("messages", []) if m.get("ticket_id") == ticket_id]
+        tickets = data.get("tickets", {})
+        messages = tickets.get(ticket_id, {}).get("messages", [])
 except (FileNotFoundError, json.JSONDecodeError):
     messages = []
 
@@ -404,16 +409,17 @@ if messages:
     st.subheader("💬 Live Tech Support Chat")
 
     for msg in messages[-20:]:
-        if msg["sender"] == "user":
+        if msg.get("sender") == "user":
             st.markdown(
-                f"<div style='background:#e3f2fd;padding:8px;border-radius:8px;margin:5px;max-width:80%'>🧑 <b>You:</b> {msg['text']}</div>",
+                f"<div style='background:#e3f2fd;padding:8px;border-radius:8px;margin:5px;max-width:80%'>🧑 <b>You:</b> {msg.get('text')}</div>",
                 unsafe_allow_html=True
             )
         else:
             st.markdown(
-                f"<div style='background:#e8f5e9;padding:8px;border-radius:8px;margin:5px;max-width:80%;margin-left:auto'>💬 <b>Pranay:</b> {msg['text']}</div>",
+                f"<div style='background:#e8f5e9;padding:8px;border-radius:8px;margin:5px;max-width:80%;margin-left:auto'>💬 <b>Pranay:</b> {msg.get('text')}</div>",
                 unsafe_allow_html=True
             )
 
+    # short pause then rerun so the UI updates for active sessions
     time.sleep(3)
-    st.rerun()
+    st.experimental_rerun()
