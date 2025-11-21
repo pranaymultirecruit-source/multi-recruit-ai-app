@@ -1,5 +1,4 @@
 import streamlit as st
-from PIL import Image
 import pandas as pd
 import json
 import os
@@ -9,8 +8,6 @@ import base64
 from pathlib import Path
 import time
 import uuid
-import webbrowser
-import requests
 from datetime import datetime
 
 # Try to import streamlit_lottie but don't crash if it's missing
@@ -427,7 +424,7 @@ def load_all_tickets():
                 return data
             else:
                 return {"tickets": {}}
-    except:
+    except (FileNotFoundError, json.JSONDecodeError, Exception):
         return {"tickets": {}}
 
 def save_all_tickets(data):
