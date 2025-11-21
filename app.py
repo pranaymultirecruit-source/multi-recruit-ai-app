@@ -1,5 +1,4 @@
 import streamlit as st
-from PIL import Image
 import pandas as pd
 import json
 import os
@@ -9,8 +8,7 @@ import base64
 from pathlib import Path
 import time
 import uuid
-import webbrowser
-import requests
+from datetime import datetime
 
 # Try to import streamlit_lottie but don't crash if it's missing
 try:
@@ -250,7 +248,7 @@ button {{
 /* greeting bubble */
 #greeting {{
   position: absolute;
-  botttom: -40px;
+  bottom: -40px;
   right: -10px;
   background: rgba(255,255,255,0.95);
   padding: 6px 8px;
@@ -426,7 +424,7 @@ def load_all_tickets():
                 return data
             else:
                 return {"tickets": {}}
-    except:
+    except (FileNotFoundError, json.JSONDecodeError, Exception):
         return {"tickets": {}}
 
 def save_all_tickets(data):
@@ -451,9 +449,9 @@ if isinstance(user_input, str) and user_input.startswith("support:"):
 
         # Append user message
         tickets_data["tickets"][ticket_id]["messages"].append({
-            "sender": "user",
+            "role": "user",
             "text": message,
-            "timestamp": int(time.time())
+            "time": str(datetime.now())
         })
 
         # Save back
@@ -475,7 +473,9 @@ if messages:
     st.subheader("💬 Live Tech Support Chat")
 
     for msg in messages[-20:]:
-        if msg.get("sender") == "user":
+        # Support both "sender" and "role" fields for backward compatibility
+        sender = msg.get("sender", msg.get("role", "user"))
+        if sender == "user":
             st.markdown(
                 f"<div style='background:#e3f2fd;padding:8px;border-radius:8px;margin:5px;max-width:80%'>🧑 <b>You:</b> {msg.get('text')}</div>",
                 unsafe_allow_html=True
@@ -488,4 +488,4 @@ if messages:
 
     # short pause then rerun so the UI updates for active sessions
     time.sleep(3)
-    st.experimental_rerun()
+    st.rerun()

@@ -191,7 +191,7 @@ if is_admin:
                     st.markdown(
                         f"<div style='background:{bg};padding:10px;border-radius:8px;margin:6px 0;'>"
                         f"<b>{sender}:</b> {msg.get('text')}"
-                        f"<div style='font-size:11px;color:#666;margin-top:6px;'>{msg.get('time','')}</div></div>",
+                        f"<div style='font-size:11px;color:#666;margin-top:6px;'>{msg.get('time', '')}</div></div>",
                         unsafe_allow_html=True,
                     )
 
@@ -210,7 +210,7 @@ if is_admin:
                 st.markdown(
                     f"<div style='background:{bg};padding:10px;border-radius:8px;margin:6px 0;'>"
                     f"<b>{sender}:</b> {msg.get('text')}"
-                    f"<div style='font-size:11px;color:#666;margin-top:6px;'>{msg.get('time','')}</div></div>",
+                    f"<div style='font-size:11px;color:#666;margin-top:6px;'>{msg.get('time', '')}</div></div>",
                     unsafe_allow_html=True,
                 )
 
@@ -262,7 +262,7 @@ else:
         st.markdown(
             f"<div style='background:{bg};padding:10px;border-radius:8px;margin:6px 0;'>"
             f"<b>{sender}:</b> {msg.get('text')}"
-            f"<div style='font-size:11px;color:#666;margin-top:6px;'>{msg.get('time','')}</div></div>",
+            f"<div style='font-size:11px;color:#666;margin-top:6px;'>{msg.get('time', '')}</div></div>",
             unsafe_allow_html=True,
         )
 
